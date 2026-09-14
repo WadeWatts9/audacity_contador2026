@@ -1,0 +1,368 @@
+:root {
+  --ink: #172d29;
+  --paper: #f7f3e6;
+  --paper-card: #fffdf5;
+  --board-bg: #143d36;
+  --board-field: #d8eadb;
+  --blue: #0875be;
+  --green: #11744e;
+  --red: #db3448;
+  --gold: #dfa72a;
+  --shadow: 3px 4px 0 #1a302a;
+  --shadow-lg: 5px 6px 0 #172d29;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--board-bg);
+  color: var(--ink);
+  font-family: 'Trebuchet MS', Arial, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding-bottom: 30px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+button:focus-visible {
+  outline: 4px solid var(--gold);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Audacity Board Container */
+.audacity-board {
+  max-width: 1240px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: var(--board-field);
+  border: 3px solid #112d26;
+  box-shadow: 0 20px 70px rgba(0, 27, 23, 0.5);
+}
+
+/* Track strip on top */
+.track {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  height: 24px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  margin-bottom: 20px;
+}
+
+.track span {
+  border-right: 2px solid var(--ink);
+  border-top: 10px solid var(--blue);
+}
+.track span:nth-child(3n) { border-top-color: var(--gold); }
+.track span:nth-child(3n+1) { border-top-color: var(--green); }
+.track span:nth-child(4n) { border-top-color: #d45a8d; }
+.track span:last-child { border-right: 0; }
+
+/* Header Brand */
+.audacity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 10px 24px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  margin: 0;
+  background: var(--red);
+  color: white;
+  padding: 4px 20px;
+  border: 3px solid white;
+  outline: 2px solid var(--ink);
+  font: 900 clamp(28px, 4vw, 44px)/1.3 Arial, sans-serif;
+  letter-spacing: 0.03em;
+  transform: rotate(-2deg);
+  box-shadow: 4px 5px 0 var(--ink);
+  display: inline-block;
+}
+
+/* Workspace Canvas */
+.workspace {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 18px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  font-weight: bold;
+  font-size: 15px;
+  box-shadow: var(--shadow);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0 var(--ink);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: white;
+}
+
+.btn-green {
+  background: var(--green);
+  color: white;
+}
+
+.btn-blue {
+  background: var(--blue);
+  color: white;
+}
+
+.btn-red {
+  background: var(--red);
+  color: white;
+}
+
+.btn-gold {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* Cards Decks */
+.decks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.deck-banner {
+  background: var(--paper-card);
+  border: 2px solid var(--ink);
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-left: 12px solid var(--blue);
+  cursor: pointer;
+}
+
+.deck-banner.economic {
+  border-left-color: var(--green);
+}
+
+.deck-banner.selected {
+  background: #e1f1fb;
+  box-shadow: 4px 4px 0 var(--blue);
+}
+
+.deck-banner.economic.selected {
+  background: #dcf0df;
+  box-shadow: 4px 4px 0 var(--green);
+}
+
+.deck-banner strong {
+  font-size: 19px;
+  display: block;
+}
+
+.deck-banner small {
+  font-size: 13px;
+  color: #405c50;
+}
+
+.deck-banner b {
+  font: 700 28px Georgia, serif;
+}
+
+/* Cards 5-column grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.card-item {
+  position: relative;
+  min-height: 140px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 12px 8px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.card-item:hover:not(.used) {
+  transform: translateY(-4px);
+  box-shadow: 3px 8px 0 var(--ink);
+}
+
+.card-item .stripe {
+  position: absolute;
+  inset: 5px 5px auto;
+  height: 16px;
+  background: var(--blue);
+  border-bottom: 1px solid var(--ink);
+}
+
+.card-item.economic .stripe {
+  background: var(--green);
+}
+
+.card-item strong {
+  font: 700 28px Georgia, serif;
+  margin-top: 14px;
+}
+
+.card-item small {
+  font-size: 13px;
+  text-align: center;
+  font-weight: 600;
+  color: #2b453e;
+}
+
+.card-item.used {
+  background: #e4e6dc;
+  box-shadow: none;
+  color: #6d7f76;
+  opacity: 0.75;
+}
+
+.card-item.used .stripe {
+  background: #8e9e95;
+}
+
+/* Tables & Rankings */
+.table-audacity {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  background: var(--paper-card);
+  border: 2px solid var(--ink);
+}
+
+.table-audacity th,
+.table-audacity td {
+  padding: 12px 14px;
+  border: 1px solid var(--ink);
+  text-align: left;
+}
+
+.table-audacity th {
+  background: #d8eadb;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.table-audacity tr:hover {
+  background: #f5fbf7;
+}
+
+/* Modal Dialog */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 39, 30, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-card {
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  max-width: 900px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px;
+  position: relative;
+}
+
+/* Tokens */
+.token-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  display: inline-grid;
+  place-items: center;
+  font-size: 20px;
+  background: var(--paper);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  border: 1px solid var(--ink);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .decks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .audacity-board {
+    margin: 8px;
+    padding: 10px;
+  }
+  .workspace {
+    padding: 14px;
+  }
+}

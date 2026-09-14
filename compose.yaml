@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: audacity_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-audacity_db}
+      POSTGRES_USER: ${POSTGRES_USER:-audacity_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-audacity_password_secure_2026}
+      TZ: America/Montevideo
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-audacity_user} -d ${POSTGRES_DB:-audacity_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    # No exponer el puerto de la base de datos al host para seguridad
+    networks:
+      - audacity_net
+
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: audacity_migrate
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-audacity_user}:${POSTGRES_PASSWORD:-audacity_password_secure_2026}@db:5432/${POSTGRES_DB:-audacity_db}
+      SYNC_DATABASE_URL: postgresql://${POSTGRES_USER:-audacity_user}:${POSTGRES_PASSWORD:-audacity_password_secure_2026}@db:5432/${POSTGRES_DB:-audacity_db}
+      SECRET_KEY: ${SECRET_KEY:-audacity_production_secret_key_change_me_2026}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - audacity_net
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: audacity_api
+    restart: unless-stopped
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-audacity_user}:${POSTGRES_PASSWORD:-audacity_password_secure_2026}@db:5432/${POSTGRES_DB:-audacity_db}
+      SYNC_DATABASE_URL: postgresql://${POSTGRES_USER:-audacity_user}:${POSTGRES_PASSWORD:-audacity_password_secure_2026}@db:5432/${POSTGRES_DB:-audacity_db}
+      SECRET_KEY: ${SECRET_KEY:-audacity_production_secret_key_change_me_2026}
+      TIMEZONE: America/Montevideo
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - audacity_net
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: audacity_web
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - audacity_net
+
+volumes:
+  db_data:
+    name: audacity_db_data
+
+networks:
+  audacity_net:
+    name: audacity_network
+    driver: bridge
