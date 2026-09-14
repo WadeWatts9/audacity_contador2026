@@ -1,4 +1,4 @@
-﻿name: audacity-contador
+name: audacity-contador
 version: '3.8'
 
 services:
@@ -28,8 +28,8 @@ x-casaos:
     es_es: "Sistema Contable y Financiero Gamificado"
   developer: "Lic. Prof. Alan Canto"
   author: "Alan Canto ACDEV"
-  icon: "https://raw.githubusercontent.com/WadeWatts9/audacity_contador2026/main/frontend/public/favicon.svg"
-  thumbnail: "https://raw.githubusercontent.com/WadeWatts9/audacity_contador2026/main/frontend/public/favicon.svg"
+  icon: "https://raw.githubusercontent.com/WadeWatts9/audacity_contador2026/main/frontend/public/icon-512.png"
+  thumbnail: "https://raw.githubusercontent.com/WadeWatts9/audacity_contador2026/main/frontend/public/icon-512.png"
   title:
     en_us: "Audacity Contador"
     es_es: "Audacity Contador"
