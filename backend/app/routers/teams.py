@@ -84,18 +84,22 @@ async def get_my_team_status(
             "timestamp": e.created_at.strftime("%H:%M:%S")
         })
 
-    # Otros equipos activos para transferencias
+    # Otros equipos activos y Banco Central para transferencias / pagos
     opponents_res = await db.execute(
         select(Account)
         .where(
             Account.game_id == game.id,
-            Account.account_type == "equipo",
+            Account.account_type.in_(["equipo", "banco"]),
             Account.id != account.id,
             Account.is_closed == False
         )
+        .order_by(Account.account_type.asc(), Account.account_name.asc())
     )
     opponents = [
-        {"id": a.id, "name": a.account_name}
+        {
+            "id": a.id,
+            "name": f"🏛️ {a.account_name}" if a.account_type == "banco" else f"👥 {a.account_name}"
+        }
         for a in opponents_res.scalars().all()
     ]
 
