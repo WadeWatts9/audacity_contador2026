@@ -110,10 +110,28 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
         
         acc_res = await db.execute(acc_query)
         row = acc_res.first()
-        if not row and not data.game_code:
-            fallback_query = select(Account, Game).join(Game, Account.game_id == Game.id).where(Account.user_id == user.id).order_by(Game.id.desc())
-            fallback_res = await db.execute(fallback_query)
-            row = fallback_res.first()
+
+        # Fallback 1: game_code provided but no match — try any active game for this user
+        if not row:
+            fallback_active = (
+                select(Account, Game)
+                .join(Game, Account.game_id == Game.id)
+                .where(Account.user_id == user.id, Game.status == "activa")
+                .order_by(Game.id.desc())
+            )
+            fb_res = await db.execute(fallback_active)
+            row = fb_res.first()
+
+        # Fallback 2: no active game — try the most recent game of any status
+        if not row:
+            fallback_any = (
+                select(Account, Game)
+                .join(Game, Account.game_id == Game.id)
+                .where(Account.user_id == user.id)
+                .order_by(Game.id.desc())
+            )
+            fb2_res = await db.execute(fallback_any)
+            row = fb2_res.first()
         
         if not row:
             raise HTTPException(
