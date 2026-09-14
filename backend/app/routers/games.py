@@ -6,14 +6,15 @@ from datetime import datetime
 import pytz
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, delete
 from app.database import get_db, get_server_time
 from app.config import settings
 from app.models.user import User
 from app.models.game import Game
 from app.models.account import Account
 from app.models.card import Card, CardInstance
-from app.models.contract import Contract
+from app.models.contract import Contract, ScheduledEvent
+from app.models.turn import TurnRecord
 from app.models.ledger import LedgerEntry
 from app.schemas.game import (
     GameCreate, GameResponse, TeamCredentials, RankingItem, GameSummaryResponse
@@ -566,3 +567,42 @@ async def export_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+@router.post("/admin/clean-database")
+@router.post("/clean-database")
+async def clean_database(
+    admin_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Elimina todos los datos de partidas, cuentas, contratos, transacciones y usuarios de equipos,
+    dejando la base de datos completamente limpia y lista para nuevas partidas.
+    Preserva intacto al usuario administrador docente.
+    """
+    # 1. Eventos programados y contratos/deudas
+    await db.execute(delete(ScheduledEvent))
+    await db.execute(delete(Contract))
+
+    # 2. Libro diario contable
+    await db.execute(delete(LedgerEntry))
+
+    # 3. Tarjetas asignadas y turnos jugados
+    await db.execute(delete(CardInstance))
+    await db.execute(delete(TurnRecord))
+
+    # 4. Cuentas bancarias y de equipos
+    await db.execute(delete(Account))
+
+    # 5. Partidas creadas
+    await db.execute(delete(Game))
+
+    # 6. Usuarios contadores de equipos (conservando el administrador docente)
+    await db.execute(delete(User).where(User.id != admin_user.id, User.role != "admin_docente"))
+
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": "Base de datos reiniciada con éxito. Todos los registros y usuarios contadores fueron eliminados. Podés crear una nueva partida limpia."
+    }

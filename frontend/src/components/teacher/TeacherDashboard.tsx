@@ -50,6 +50,10 @@ export const TeacherDashboard: React.FC = () => {
   const [endingGame, setEndingGame] = useState<boolean>(false);
   const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
 
+  // Estados para Limpiar Base de Datos
+  const [showCleanDbModal, setShowCleanDbModal] = useState<boolean>(false);
+  const [cleaningDb, setCleaningDb] = useState<boolean>(false);
+
   // Estados para operaciones bancarias
   const [showBankModal, setShowBankModal] = useState(false);
   const [bankOpType, setBankOpType] = useState<'pay' | 'collect' | 'transfer' | 'adjust' | 'zero'>('pay');
@@ -262,6 +266,23 @@ export const TeacherDashboard: React.FC = () => {
     }
   };
 
+  const handleCleanDatabase = async () => {
+    setCleaningDb(true);
+    try {
+      const res = await api.cleanDatabase();
+      alert(res.message || 'Base de datos reiniciada con éxito.');
+      setShowCleanDbModal(false);
+      setGameCode('');
+      setCreatedCredentials(null);
+      refreshGame();
+      setShowCreateModal(true);
+    } catch (err: any) {
+      alert('Error limpiando base de datos: ' + err.message);
+    } finally {
+      setCleaningDb(false);
+    }
+  };
+
   const activeSquare = squares.find((s) => s.id === selectedSquareId);
 
   return (
@@ -307,6 +328,15 @@ export const TeacherDashboard: React.FC = () => {
               <span>FIN DE PARTIDA</span>
             </button>
           )}
+          <button
+            onClick={() => setShowCleanDbModal(true)}
+            className="btn"
+            style={{ fontWeight: 'bold', color: '#b91c1c', borderColor: '#fca5a5', background: '#fef2f2' }}
+            title="Eliminar todas las partidas y reiniciar la base de datos a cero"
+          >
+            <AlertTriangle size={16} color="#b91c1c" />
+            <span>Limpiar DB</span>
+          </button>
         </div>
       </div>
 
@@ -1250,6 +1280,53 @@ export const TeacherDashboard: React.FC = () => {
                 style={{ background: '#dc2626', color: '#fff', fontWeight: 'bold' }}
               >
                 {endingGame ? 'Cerrando Partida...' : 'Confirmar Fin de Partida'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Limpiar Base de Datos */}
+      {showCleanDbModal && (
+        <div className="modal-backdrop">
+          <div className="modal-card" style={{ maxWidth: '520px', border: '3px solid #b91c1c' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', color: '#b91c1c' }}>
+              <AlertTriangle size={30} />
+              <h3 style={{ font: '700 24px Georgia, serif', margin: 0 }}>
+                ¿Limpiar y Vaciar Base de Datos?
+              </h3>
+            </div>
+            <p style={{ fontSize: '14px', color: '#334155', lineHeight: 1.5, marginBottom: '12px' }}>
+              Esta acción es <strong>definitiva e irreversible</strong>. Se eliminarán de forma permanente:
+            </p>
+            <ul style={{ fontSize: '13.5px', color: '#475569', marginBottom: '16px', paddingLeft: '20px', lineHeight: 1.6 }}>
+              <li>Todas las partidas creadas en el sistema.</li>
+              <li>Todas las cuentas bancarias, saldos acumulados y libros diarios.</li>
+              <li>Todos los contratos de deuda y amortizaciones.</li>
+              <li>Todas las tarjetas jugadas y turnos registrados.</li>
+              <li>Todos los usuarios contadores de equipos.</li>
+            </ul>
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '10px 14px', marginBottom: '20px', fontSize: '13px', color: '#166534', fontWeight: 600 }}>
+              ✓ Tu usuario <code>admin_docente</code> y tu sesión activa permanecerán intactos.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setShowCleanDbModal(false)}
+                disabled={cleaningDb}
+                className="btn"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleCleanDatabase}
+                disabled={cleaningDb}
+                className="btn btn-red"
+                style={{ background: '#b91c1c', color: '#fff', fontWeight: 'bold' }}
+              >
+                {cleaningDb ? 'Limpiando Base de Datos...' : 'Sí, Vaciar Base de Datos'}
               </button>
             </div>
           </div>

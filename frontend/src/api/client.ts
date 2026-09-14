@@ -70,6 +70,8 @@ export const api = {
 
   endGame: (code: string) => request<any>(`/games/${code}/end-game`, { method: 'POST' }),
 
+  cleanDatabase: () => request<{ status: string; message: string }>('/games/admin/clean-database', { method: 'POST' }),
+
   getExportPdfUrl: (code: string) => `${API_BASE}/games/${code}/export-pdf`,
 
   // Bank

@@ -32,9 +32,13 @@ def generate_secure_password(length: int = 14) -> str:
     return "".join(password)
 
 def generate_simple_team_password(animal: str = "equipo") -> str:
-    """Genera contraseñas simples, claras y memorables para estudiantes en el aula."""
+    """
+    Genera contraseñas memorables para estudiantes con PIN numérico aleatorio de 4 dígitos único.
+    Ejemplo: contadorgallo2026, contadorestrella1456, contadorleon4829
+    """
     clean_animal = animal.lower().strip().replace("contador_", "").replace("_contador", "")
-    return f"{clean_animal}123"
+    pin = secrets.randbelow(9000) + 1000  # 4 dígitos aleatorios (1000 a 9999)
+    return f"contador{clean_animal}{pin}"
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

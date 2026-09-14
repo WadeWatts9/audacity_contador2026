@@ -51,15 +51,25 @@ async def get_admin_user(
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
     raw_uname = data.username.strip().lower()
-    alt_uname = raw_uname
-    if raw_uname.startswith("contador_"):
-        alt_uname = f"{raw_uname.replace('contador_', '')}_contador"
-    elif raw_uname.endswith("_contador"):
-        alt_uname = f"contador_{raw_uname.replace('_contador', '')}"
+    possible_unames = {raw_uname}
+    clean = raw_uname.replace("_", "").replace("-", "")
+    if clean.startswith("contador"):
+        animal = clean[8:]
+        possible_unames.add(f"{animal}_contador")
+        possible_unames.add(f"contador_{animal}")
+        possible_unames.add(animal)
+    elif clean.endswith("contador"):
+        animal = clean[:-8]
+        possible_unames.add(f"{animal}_contador")
+        possible_unames.add(f"contador_{animal}")
+        possible_unames.add(animal)
+    else:
+        possible_unames.add(f"{clean}_contador")
+        possible_unames.add(f"contador_{clean}")
 
-    query = select(User).where((User.username == raw_uname) | (User.username == alt_uname))
+    query = select(User).where(User.username.in_(list(possible_unames)))
     result = await db.execute(query)
-    user = result.scalar_one_or_none()
+    user = result.scalars().first()
     
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(
