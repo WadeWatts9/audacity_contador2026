@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -9,6 +10,25 @@ from app.schemas.auth import LoginRequest, TokenResponse, UserResponse
 from app.security import verify_password, create_access_token, oauth2_scheme, decode_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+async def get_optional_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    if not token:
+        return None
+    payload = decode_access_token(token)
+    if not payload:
+        return None
+    username: str = payload.get("sub")
+    if not username:
+        return None
+    query = select(User).where(User.username == username)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if not user or not user.is_active:
+        return None
+    return user
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

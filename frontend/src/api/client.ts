@@ -135,6 +135,12 @@ export const api = {
 
   resetDecks: (code: string) => request<any>(`/cards/reset/${code}`, { method: 'POST' }),
 
+  setCardStatus: (code: string, cardCode: string, status: 'disponible' | 'resuelta_usada') =>
+    request<any>(`/cards/set-status/${code}`, {
+      method: 'POST',
+      body: JSON.stringify({ card_code: cardCode, status }),
+    }),
+
   // Team
   getMyTeamStatus: () => request<MyTeamStatus>('/teams/me/status'),
 

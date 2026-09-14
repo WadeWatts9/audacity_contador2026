@@ -10,19 +10,26 @@ from app.models.account import Account
 from app.models.card import Card, CardInstance
 from app.schemas.card import (
     CardPublicResponse, CardPrivateResponse, CardInstanceResponse,
-    CardDrawRequest, CardValidatePRequest, CardExecuteERequest
+    CardDrawRequest, CardValidatePRequest, CardExecuteERequest,
+    CardStatusUpdateRequest
 )
-from app.routers.auth import get_current_user, get_admin_user
+from app.routers.auth import get_current_user, get_admin_user, get_optional_user
 from app.engine.effects_engine import EffectsEngine, compute_pct
 from app.routers.ws import manager
 
 router = APIRouter(prefix="/cards", tags=["cards"])
 
 @router.get("/decks/{game_code}")
-async def get_deck_status(game_code: str, db: AsyncSession = Depends(get_db)):
+async def get_deck_status(
+    game_code: str,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: AsyncSession = Depends(get_db)
+):
     """
     Retorna el estado de los dos mazos (P y E) sin respuestas docentes.
     Apto para equipos, proyección y tablero general.
+    Si el solicitante no es admin_docente, las consignas de tarjetas aún 'disponibles'
+    se protegen y se revelan únicamente al pasar a 'resuelta_usada'.
     """
     g_res = await db.execute(select(Game).where(Game.code == game_code.upper().strip()))
     game = g_res.scalar_one_or_none()
@@ -36,6 +43,8 @@ async def get_deck_status(game_code: str, db: AsyncSession = Depends(get_db)):
     )
     res = await db.execute(query)
     rows = res.all()
+
+    is_admin = current_user is not None and current_user.role == "admin_docente"
 
     p_cards = []
     e_cards = []
@@ -52,13 +61,19 @@ async def get_deck_status(game_code: str, db: AsyncSession = Depends(get_db)):
             "assigned_to": inst.assigned_to_account_id
         }
         if card.deck_type == "P":
-            # Ocultar la pregunta a los alumnos en el catálogo general; solo ven código y estado
             p_item = dict(item)
-            p_item["title"] = f"Pregunta {card.code}"
-            p_item["text"] = "Pregunta protegida. Se revela en proyección o lectura del docente."
+            if not is_admin and inst.status == "disponible":
+                p_item["title"] = f"Pregunta {card.code}"
+                p_item["text"] = "Pregunta protegida en el mazo. Se revelará cuando el docente la seleccione y marque como no disponible."
+                p_item["image_path"] = ""
             p_cards.append(p_item)
         else:
-            e_cards.append(item)
+            e_item = dict(item)
+            if not is_admin and inst.status == "disponible":
+                e_item["title"] = f"Reto {card.code}"
+                e_item["text"] = "Reto protegido en el mazo. Se revelará cuando el docente lo seleccione y marque como no disponible."
+                e_item["image_path"] = ""
+            e_cards.append(e_item)
 
     p_cards.sort(key=lambda x: x["code"])
     e_cards.sort(key=lambda x: x["code"])
@@ -488,3 +503,51 @@ async def reset_decks(
     await db.commit()
     await manager.broadcast(game.code, "DECKS_RESET", {"message": "Los dos mazos fueron reiniciados."})
     return {"message": "Mazos reiniciados con éxito."}
+
+@router.post("/set-status/{game_code}")
+async def set_card_status(
+    game_code: str,
+    data: CardStatusUpdateRequest,
+    admin_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Permite al docente marcar manualmente una tarjeta como disponible o no disponible (resuelta/usada).
+    """
+    g_res = await db.execute(select(Game).where(Game.code == game_code.upper().strip()))
+    game = g_res.scalar_one_or_none()
+    if not game:
+        raise HTTPException(status_code=404, detail="Partida no encontrada.")
+
+    query = select(CardInstance).where(
+        CardInstance.game_id == game.id,
+        CardInstance.card_code == data.card_code.upper().strip()
+    )
+    res = await db.execute(query)
+    instance = res.scalars().first()
+    if not instance:
+        raise HTTPException(status_code=404, detail="Tarjeta no encontrada en esta partida.")
+
+    instance.status = data.status
+    if data.status == "resuelta_usada":
+        instance.resolved_at = datetime.utcnow()
+    else:
+        instance.resolved_at = None
+        instance.assigned_to_account_id = None
+        instance.assigned_at = None
+
+    await db.commit()
+
+    action_label = "NO DISPONIBLE" if data.status == "resuelta_usada" else "DISPONIBLE"
+    await manager.broadcast(game.code, "CARD_STATUS_CHANGED", {
+        "card_code": instance.card_code,
+        "status": instance.status,
+        "message": f"Tarjeta {instance.card_code} marcada como {action_label} por el docente."
+    })
+
+    return {
+        "card_code": instance.card_code,
+        "status": instance.status,
+        "message": f"Tarjeta {instance.card_code} actualizada a {action_label}."
+    }
+

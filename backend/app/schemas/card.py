@@ -55,3 +55,8 @@ class CardExecuteERequest(BaseModel):
     second_target_account_id: Optional[int] = None  # For Casilla 12
     dice_rolls: Optional[List[int]] = None          # For E04, E15 or digital
     accept_insurance: Optional[bool] = None         # For E11
+
+class CardStatusUpdateRequest(BaseModel):
+    card_code: str
+    status: str = Field(..., pattern="^(disponible|resuelta_usada)$")
+

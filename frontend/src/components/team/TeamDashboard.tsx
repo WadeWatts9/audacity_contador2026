@@ -203,117 +203,130 @@ export const TeamDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Mazos P y E para elegir si la casilla lo indica */}
-      <div className="workspace">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-          <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', margin: 0 }}>
-            Tarjetas de la Partida (Preguntas y Retos)
-          </h3>
-          <span style={{ fontSize: '13px', color: '#556b62', background: '#f5fbf7', padding: '4px 10px', borderRadius: '4px', border: '1px solid #c0d0c4' }}>
-            ℹ️ Las preguntas se mantienen en secreto y se revelan por el docente al momento de jugar
-          </span>
-        </div>
+      {/* Tarjetas Jugadas (Preguntas y Retos) */}
+      {(() => {
+        const usedPCards = pDeck.filter((c) => c.status === 'resuelta_usada');
+        const usedECards = eDeck.filter((c) => c.status === 'resuelta_usada');
 
-        {/* Sección Preguntas (P01 - P15) */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <strong style={{ color: 'var(--blue)', fontSize: '15px' }}>
-              📘 Tarjetas de Preguntas (P): {countPAvailable} disponibles / 15 totales
-            </strong>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '10px' }}>
-            {pDeck.map((c) => {
-              const isUsed = c.status === 'resuelta_usada';
-              return (
-                <div
-                  key={c.code}
-                  onClick={() => setSelectedCard(c)}
-                  style={{
-                    border: isUsed ? '1.5px solid #d1d5db' : '2px solid var(--blue)',
-                    background: isUsed ? '#f3f4f6' : '#fffdf5',
-                    opacity: isUsed ? 0.65 : 1,
-                    borderRadius: '6px',
-                    padding: '12px 8px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    boxShadow: isUsed ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
-                  }}
-                  title={isUsed ? `${c.code}: Ya salió` : `${c.code}: Disponible`}
-                >
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: isUsed ? '#6b7280' : 'var(--blue)', fontFamily: 'monospace' }}>
-                    {c.code}
-                  </div>
-                  <div style={{ marginTop: '6px' }}>
-                    <span
-                      className="badge"
-                      style={{
-                        fontSize: '11px',
-                        padding: '2px 6px',
-                        background: isUsed ? '#e5e7eb' : '#dbeafe',
-                        color: isUsed ? '#4b5563' : '#1e40af',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      {isUsed ? 'YA SALIÓ' : 'DISPONIBLE'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        return (
+          <div className="workspace">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+              <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', margin: 0 }}>
+                Tarjetas Jugadas (Preguntas y Retos)
+              </h3>
+              <span style={{ fontSize: '13px', color: '#556b62', background: '#f5fbf7', padding: '4px 10px', borderRadius: '4px', border: '1px solid #c0d0c4' }}>
+                ℹ️ Los retos y preguntas no son visibles en el mazo. Se hacen visibles aquí una vez seleccionados y marcados como no disponibles por el docente.
+              </span>
+            </div>
 
-        {/* Sección Retos Económicos (E01 - E15) */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <strong style={{ color: 'var(--green)', fontSize: '15px' }}>
-              📗 Retos Económicos (E): {countEAvailable} disponibles / 15 totales
-            </strong>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '10px' }}>
-            {eDeck.map((c) => {
-              const isUsed = c.status === 'resuelta_usada';
-              return (
-                <div
-                  key={c.code}
-                  onClick={() => setSelectedCard(c)}
-                  style={{
-                    border: isUsed ? '1.5px solid #d1d5db' : '2px solid var(--green)',
-                    background: isUsed ? '#f3f4f6' : '#fffdf5',
-                    opacity: isUsed ? 0.65 : 1,
-                    borderRadius: '6px',
-                    padding: '12px 8px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    boxShadow: isUsed ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
-                  }}
-                  title={isUsed ? `${c.code}: Ya salió` : `${c.code}: Disponible`}
-                >
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: isUsed ? '#6b7280' : 'var(--green)', fontFamily: 'monospace' }}>
-                    {c.code}
-                  </div>
-                  <div style={{ marginTop: '6px' }}>
-                    <span
-                      className="badge"
-                      style={{
-                        fontSize: '11px',
-                        padding: '2px 6px',
-                        background: isUsed ? '#e5e7eb' : '#dcfce7',
-                        color: isUsed ? '#4b5563' : '#166534',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      {isUsed ? 'YA SALIÓ' : 'DISPONIBLE'}
-                    </span>
-                  </div>
+            {/* Sección Preguntas (P) */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <strong style={{ color: 'var(--blue)', fontSize: '15px' }}>
+                  📘 Preguntas Jugadas: {usedPCards.length} visibles ({countPAvailable} en el mazo)
+                </strong>
+              </div>
+
+              {usedPCards.length === 0 ? (
+                <div style={{ padding: '16px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '6px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                  🔒 Ninguna pregunta ha sido jugada todavía. Se revelarán aquí una vez seleccionadas y marcadas como no disponibles por el docente.
                 </div>
-              );
-            })}
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px' }}>
+                  {usedPCards.map((c) => (
+                    <div
+                      key={c.code}
+                      onClick={() => setSelectedCard(c)}
+                      style={{
+                        border: '2px solid var(--blue)',
+                        background: '#eff6ff',
+                        borderRadius: '6px',
+                        padding: '12px 8px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      }}
+                      title={`${c.code}: Ya jugada / Clic para ver`}
+                    >
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--blue)', fontFamily: 'monospace' }}>
+                        {c.code}
+                      </div>
+                      <div style={{ marginTop: '6px' }}>
+                        <span
+                          className="badge"
+                          style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            background: '#fee2e2',
+                            color: '#991b1b',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          NO DISPONIBLE
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sección Retos Económicos (E) */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <strong style={{ color: 'var(--green)', fontSize: '15px' }}>
+                  📗 Retos Económicos Jugados: {usedECards.length} visibles ({countEAvailable} en el mazo)
+                </strong>
+              </div>
+
+              {usedECards.length === 0 ? (
+                <div style={{ padding: '16px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '6px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                  🔒 Ningún reto ha sido jugado todavía. Se revelarán aquí una vez seleccionados y marcados como no disponibles por el docente.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px' }}>
+                  {usedECards.map((c) => (
+                    <div
+                      key={c.code}
+                      onClick={() => setSelectedCard(c)}
+                      style={{
+                        border: '2px solid var(--green)',
+                        background: '#f0fdf4',
+                        borderRadius: '6px',
+                        padding: '12px 8px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      }}
+                      title={`${c.code}: Ya jugada / Clic para ver`}
+                    >
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--green)', fontFamily: 'monospace' }}>
+                        {c.code}
+                      </div>
+                      <div style={{ marginTop: '6px' }}>
+                        <span
+                          className="badge"
+                          style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            background: '#fee2e2',
+                            color: '#991b1b',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          NO DISPONIBLE
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Historial Propio de Movimientos */}
       <div className="workspace">
@@ -452,7 +465,7 @@ export const TeamDashboard: React.FC = () => {
               <div style={{ padding: '20px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                 <div style={{ fontSize: '48px', marginBottom: '8px' }}>📘</div>
                 <h3 style={{ font: '700 24px Georgia, serif', marginBottom: '8px', color: 'var(--blue)' }}>
-                  Tarjeta {selectedCard.code}
+                  {selectedCard.title || `Tarjeta ${selectedCard.code}`}
                 </h3>
                 <div style={{ marginBottom: '16px' }}>
                   <span
@@ -460,19 +473,26 @@ export const TeamDashboard: React.FC = () => {
                     style={{
                       fontSize: '13px',
                       padding: '4px 10px',
-                      background: selectedCard.status === 'resuelta_usada' ? '#fee2e2' : '#dbeafe',
-                      color: selectedCard.status === 'resuelta_usada' ? '#991b1b' : '#1e40af',
+                      background: '#fee2e2',
+                      color: '#991b1b',
                       fontWeight: 'bold',
                     }}
                   >
-                    ESTADO: {selectedCard.status === 'resuelta_usada' ? 'YA SALIÓ' : 'DISPONIBLE EN EL MAZO'}
+                    ESTADO: NO DISPONIBLE (JUGADA)
                   </span>
                 </div>
-                <p style={{ fontSize: '15px', color: '#334155', maxWidth: '520px', margin: '0 auto 16px auto', lineHeight: 1.5 }}>
-                  {selectedCard.status === 'resuelta_usada'
-                    ? 'Esta tarjeta ya fue respondida y utilizada en una ronda previa de la partida.'
-                    : 'Las preguntas se mantienen ocultas para los estudiantes hasta el momento del turno para asegurar la equidad del juego. El docente la leerá en voz alta o se proyectará en la pantalla principal.'}
+                <p style={{ fontSize: '16px', color: '#1e293b', maxWidth: '560px', margin: '0 auto 16px auto', lineHeight: 1.6, fontWeight: 500 }}>
+                  {selectedCard.text}
                 </p>
+                {selectedCard.image_path && (
+                  <div style={{ maxWidth: '300px', margin: '0 auto 16px auto' }}>
+                    <img
+                      src={selectedCard.image_path}
+                      alt={selectedCard.title}
+                      style={{ width: '100%', border: '2px solid var(--ink)', borderRadius: '4px' }}
+                    />
+                  </div>
+                )}
                 <button onClick={() => setSelectedCard(null)} className="btn btn-primary">
                   Cerrar
                 </button>
@@ -490,7 +510,7 @@ export const TeamDashboard: React.FC = () => {
                   <h3 style={{ font: '700 26px Georgia, serif', marginBottom: '10px' }}>{selectedCard.title}</h3>
                   <p style={{ fontSize: '18px', lineHeight: 1.6, marginBottom: '20px' }}>{selectedCard.text}</p>
                   <div style={{ borderTop: '1px solid #c0d0c4', paddingTop: '14px', fontSize: '13px', color: '#556b62' }}>
-                    Estado: <strong>{selectedCard.status === 'resuelta_usada' ? 'YA SALIÓ' : 'DISPONIBLE'}</strong>
+                    Estado: <span className="badge" style={{ background: '#fee2e2', color: '#991b1b', fontWeight: 'bold' }}>NO DISPONIBLE (JUGADA)</span>
                   </div>
                 </div>
               </div>

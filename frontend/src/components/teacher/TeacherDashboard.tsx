@@ -36,6 +36,9 @@ export const TeacherDashboard: React.FC = () => {
   const [targetTeamId, setTargetTeamId] = useState<number | ''>('');
   const [eDiceRolls, setEDiceRolls] = useState<number[]>([4, 4, 4]);
   const [acceptInsurance, setAcceptInsurance] = useState<boolean>(true);
+  const [inspectingUsedCard, setInspectingUsedCard] = useState<Card | null>(null);
+  const [cardFilter, setCardFilter] = useState<'all' | 'disponible' | 'no_disponible'>('all');
+
 
   // Estados para efectos configurables de Preguntas P
   const [pEffectMode, setPEffectMode] = useState<'percentage' | 'fixed' | 'otros'>('percentage');
@@ -115,6 +118,40 @@ export const TeacherDashboard: React.FC = () => {
       alert('Error al extraer tarjeta: ' + err.message);
     }
   };
+
+  const handleCardItemClick = (c: Card) => {
+    if (c.status === 'resuelta_usada') {
+      setInspectingUsedCard(c);
+    } else {
+      handleDrawCard(c.deck_type, c.code);
+    }
+  };
+
+  const handleMarkActiveUnavailable = async () => {
+    if (!gameCode || !activeCard) return;
+    try {
+      await api.setCardStatus(gameCode, activeCard.code, 'resuelta_usada');
+      alert(`Tarjeta ${activeCard.code} marcada como NO DISPONIBLE.`);
+      setActiveCard(null);
+      setActiveCardInstanceId(null);
+      refreshGame();
+    } catch (err: any) {
+      alert('Error al marcar tarjeta: ' + err.message);
+    }
+  };
+
+  const handleReactivateCard = async (cardCode: string) => {
+    if (!gameCode) return;
+    try {
+      await api.setCardStatus(gameCode, cardCode, 'disponible');
+      alert(`Tarjeta ${cardCode} reactivada como DISPONIBLE en el mazo.`);
+      setInspectingUsedCard(null);
+      refreshGame();
+    } catch (err: any) {
+      alert('Error reactivando tarjeta: ' + err.message);
+    }
+  };
+
 
   const handleValidateP = async (isCorrect: boolean) => {
     if (!activeCardInstanceId) return;
@@ -649,7 +686,7 @@ export const TeacherDashboard: React.FC = () => {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
                     <button onClick={() => handleValidateP(true)} className="btn btn-green">
                       <CheckCircle2 size={16} />
                       <span>Respuesta Correcta</span>
@@ -657,6 +694,16 @@ export const TeacherDashboard: React.FC = () => {
                     <button onClick={() => handleValidateP(false)} className="btn btn-red">
                       <XCircle size={16} />
                       <span>Respuesta Incorrecta</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleMarkActiveUnavailable}
+                      className="btn"
+                      style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c' }}
+                      title="Marcar como no disponible sin aplicar cambios monetarios"
+                    >
+                      <AlertTriangle size={16} />
+                      <span>Marcar como No Disponible</span>
                     </button>
                   </div>
                 </div>
@@ -748,10 +795,22 @@ export const TeacherDashboard: React.FC = () => {
                     </div>
                   )}
 
-                  <button onClick={handleExecuteE} className="btn btn-green" style={{ width: '100%', justifyContent: 'center' }}>
-                    <Play size={16} />
-                    <span>Aplicar Efecto Atómico de {activeCard.code}</span>
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+                    <button onClick={handleExecuteE} className="btn btn-green" style={{ flex: 1, minWidth: '220px', justifyContent: 'center' }}>
+                      <Play size={16} />
+                      <span>Aplicar Efecto Atómico de {activeCard.code}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleMarkActiveUnavailable}
+                      className="btn"
+                      style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c' }}
+                      title="Marcar como no disponible sin aplicar efecto financiero"
+                    >
+                      <AlertTriangle size={16} />
+                      <span>Marcar como No Disponible</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -851,14 +910,43 @@ export const TeacherDashboard: React.FC = () => {
 
       {/* Mazos P y E para extracción */}
       <div className="workspace">
-        <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', marginBottom: '14px' }}>
-          Selección de Tarjetas (P01-P15 y E01-E15)
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+          <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', margin: 0 }}>
+            Selección de Tarjetas (P01-P15 y E01-E15)
+          </h3>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setCardFilter('all')}
+              className={`btn ${cardFilter === 'all' ? 'btn-primary' : ''}`}
+              style={{ padding: '4px 10px', fontSize: '12px' }}
+            >
+              Todas (30)
+            </button>
+            <button
+              type="button"
+              onClick={() => setCardFilter('disponible')}
+              className={`btn ${cardFilter === 'disponible' ? 'btn-primary' : ''}`}
+              style={{ padding: '4px 10px', fontSize: '12px' }}
+            >
+              Disponibles ({countPAvailable + countEAvailable})
+            </button>
+            <button
+              type="button"
+              onClick={() => setCardFilter('no_disponible')}
+              className={`btn ${cardFilter === 'no_disponible' ? 'btn-primary' : ''}`}
+              style={{ padding: '4px 10px', fontSize: '12px' }}
+            >
+              No Disponibles ({30 - countPAvailable - countEAvailable})
+            </button>
+          </div>
+        </div>
+
         <div className="decks-grid">
           <div
             className="deck-banner"
             onClick={() => handleDrawCard('P')}
-            title="Extraer una tarjeta de Preguntas"
+            title="Extraer una tarjeta de Preguntas al azar"
           >
             <div>
               <strong>Preguntas (P)</strong>
@@ -870,7 +958,7 @@ export const TeacherDashboard: React.FC = () => {
           <div
             className="deck-banner economic"
             onClick={() => handleDrawCard('E')}
-            title="Extraer un Reto Económico"
+            title="Extraer un Reto Económico al azar"
           >
             <div>
               <strong>Retos Económicos (E)</strong>
@@ -882,20 +970,42 @@ export const TeacherDashboard: React.FC = () => {
 
         {/* Tarjetas P y E listadas */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
-          {pDeck.concat(eDeck).map((c) => (
-            <div
-              key={c.code}
-              onClick={() => handleDrawCard(c.deck_type, c.code)}
-              className={`card-item ${c.deck_type === 'E' ? 'economic' : ''} ${c.status === 'resuelta_usada' ? 'used' : ''}`}
-            >
-              <div className="stripe"></div>
-              <strong>{c.code}</strong>
-              <small>{c.title}</small>
-              <span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>
-                {c.status === 'resuelta_usada' ? 'USADA' : 'DISPONIBLE'}
-              </span>
-            </div>
-          ))}
+          {pDeck
+            .concat(eDeck)
+            .filter((c) => {
+              if (cardFilter === 'disponible') return c.status !== 'resuelta_usada';
+              if (cardFilter === 'no_disponible') return c.status === 'resuelta_usada';
+              return true;
+            })
+            .map((c) => {
+              const isUsed = c.status === 'resuelta_usada';
+              return (
+                <div
+                  key={c.code}
+                  onClick={() => handleCardItemClick(c)}
+                  className={`card-item ${c.deck_type === 'E' ? 'economic' : ''} ${isUsed ? 'used' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                  title={isUsed ? `${c.code}: Ya no disponible. Clic para ver o reactivar` : `${c.code}: Disponible. Clic para seleccionar / jugar`}
+                >
+                  <div className="stripe"></div>
+                  <strong>{c.code}</strong>
+                  <small>{c.title}</small>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      marginTop: '4px',
+                      fontWeight: 'bold',
+                      padding: '2px 4px',
+                      borderRadius: '3px',
+                      background: isUsed ? '#fee2e2' : '#dcfce7',
+                      color: isUsed ? '#991b1b' : '#166534',
+                    }}
+                  >
+                    {isUsed ? 'NO DISPONIBLE' : 'DISPONIBLE'}
+                  </span>
+                </div>
+              );
+            })}
         </div>
       </div>
 
@@ -1338,6 +1448,74 @@ export const TeacherDashboard: React.FC = () => {
                 style={{ background: '#b91c1c', color: '#fff', fontWeight: 'bold' }}
               >
                 {cleaningDb ? 'Limpiando Base de Datos...' : 'Sí, Vaciar Base de Datos'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Inspeccionar / Reactivar Tarjeta No Disponible */}
+      {inspectingUsedCard && (
+        <div className="modal-backdrop">
+          <div className="modal-card" style={{ maxWidth: '680px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <span
+                className="badge"
+                style={{
+                  backgroundColor: inspectingUsedCard.deck_type === 'P' ? 'var(--blue)' : 'var(--green)',
+                  color: 'white',
+                  fontSize: '13px',
+                }}
+              >
+                {inspectingUsedCard.code} · {inspectingUsedCard.deck_type === 'P' ? 'Pregunta' : 'Reto Económico'} · NO DISPONIBLE
+              </span>
+              <button onClick={() => setInspectingUsedCard(null)} className="btn">
+                Cerrar
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: inspectingUsedCard.image_path ? 'minmax(200px, 280px) 1fr' : '1fr', gap: '16px', alignItems: 'center' }}>
+              {inspectingUsedCard.image_path && (
+                <div>
+                  <img
+                    src={inspectingUsedCard.image_path}
+                    alt={inspectingUsedCard.title}
+                    style={{ width: '100%', border: '2px solid var(--ink)', borderRadius: '4px' }}
+                  />
+                </div>
+              )}
+              <div>
+                <h4 style={{ font: '700 22px Georgia, serif', marginBottom: '8px' }}>{inspectingUsedCard.title}</h4>
+                <p style={{ fontSize: '15px', lineHeight: 1.5, color: '#334155', marginBottom: '14px' }}>
+                  {inspectingUsedCard.text}
+                </p>
+                {inspectingUsedCard.teacher_answer && (
+                  <div style={{ background: '#e1f1fb', border: '1px solid var(--blue)', padding: '10px', borderRadius: '4px', marginBottom: '14px', fontSize: '13px' }}>
+                    <strong>Clave Docente:</strong> {inspectingUsedCard.teacher_answer}
+                  </div>
+                )}
+                <div style={{ padding: '8px 12px', background: '#fee2e2', borderRadius: '4px', color: '#991b1b', fontSize: '13px', fontWeight: 'bold', marginBottom: '14px' }}>
+                  Estado actual: NO DISPONIBLE (Visible para los equipos contadores)
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px', borderTop: '1px solid #c0d0c4', paddingTop: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setInspectingUsedCard(null)}
+                className="btn"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReactivateCard(inspectingUsedCard.code)}
+                className="btn btn-primary"
+                title="Volver a poner esta tarjeta en el mazo como DISPONIBLE"
+              >
+                <RotateCcw size={15} />
+                <span>Reactivar (Marcar como DISPONIBLE)</span>
               </button>
             </div>
           </div>
