@@ -24,6 +24,7 @@ from app.routers.auth import get_current_user, get_admin_user
 from app.routers.ws import manager
 from app.engine.cards_data import CARDS_CATALOG
 from app.engine.pdf_report import generate_game_audit_pdf
+from app.engine.student_guide_pdf import generate_student_guide_pdf
 
 router = APIRouter(prefix="/games", tags=["games"])
 
@@ -606,3 +607,14 @@ async def clean_database(
         "status": "success",
         "message": "Base de datos reiniciada con éxito. Todos los registros y usuarios contadores fueron eliminados. Podés crear una nueva partida limpia."
     }
+
+
+@router.get("/student-guide-pdf")
+async def download_student_guide_pdf():
+    """Descarga directa del PDF oficial de la Guía del Estudiante."""
+    guide_bytes = generate_student_guide_pdf()
+    return Response(
+        content=guide_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "inline; filename=guia_estudiante_audacity.pdf"}
+    )

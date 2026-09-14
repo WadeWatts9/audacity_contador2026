@@ -313,6 +313,17 @@ export const TeacherDashboard: React.FC = () => {
             <FileText size={16} />
             <span>{downloadingPdf ? 'Generando...' : 'PDF Auditoría'}</span>
           </button>
+          <a
+            href="/guia_estudiante_audacity.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Ver y descargar la Guía de Uso del Estudiante en PDF"
+          >
+            <FileText size={16} />
+            <span>Guía Alumnos (PDF)</span>
+          </a>
           <button onClick={handleResetDecks} className="btn" title="Reiniciar disponibilidad de tarjetas">
             <RotateCcw size={16} />
             <span>Reiniciar Mazos</span>

@@ -3,7 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { MyTeamStatus, Card } from '../../types';
-import { ArrowRightLeft, ShieldCheck, Clock, Wallet, History, Send } from 'lucide-react';
+import { ArrowRightLeft, ShieldCheck, Clock, Wallet, History, Send, FileText } from 'lucide-react';
 
 export const TeamDashboard: React.FC = () => {
   const { gameCode, summary, pDeck, eDeck, countPAvailable, countEAvailable, refreshGame } = useGame();
@@ -126,14 +126,28 @@ export const TeamDashboard: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowTransferModal(true)}
-          className="btn btn-primary"
-          style={{ padding: '10px 18px', fontSize: '15px' }}
-        >
-          <Send size={16} />
-          <span>Transferir / Pagar</span>
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <a
+            href="/guia_estudiante_audacity.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px' }}
+            title="Abrir o descargar la Guía de Uso Oficial en PDF para estudiantes"
+          >
+            <FileText size={16} />
+            <span>Guía de Uso (PDF)</span>
+          </a>
+
+          <button
+            onClick={() => setShowTransferModal(true)}
+            className="btn btn-primary"
+            style={{ padding: '10px 18px', fontSize: '15px' }}
+          >
+            <Send size={16} />
+            <span>Transferir / Pagar</span>
+          </button>
+        </div>
       </div>
 
       {/* Tarjetas de Saldos Patrimoniales */}
