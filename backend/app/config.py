@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     TIMEZONE: str = "America/Montevideo"
     
     # Network / Host
-    APP_PORT: int = int(os.getenv("APP_PORT", "8080"))
+    APP_PORT: int = int(os.getenv("APP_PORT", "3003"))
     BIND_ADDRESS: str = os.getenv("BIND_ADDRESS", "0.0.0.0")
     
     class Config:

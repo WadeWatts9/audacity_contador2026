@@ -17,45 +17,60 @@ Docker Compose organiza la plataforma en 4 servicios:
 
 ---
 
-## 2. Puesta en Marcha Rápida (Windows / Linux / macOS)
+## 2. Despliegue Ultrarrápido en ZimaOS / CasaOS (Recomendado)
+
+Audacity está optimizado para ejecutarse en **ZimaOS** y **CasaOS** en el puerto **3003**, con imagen ligera precompilada y persistencia de datos automática:
+
+### Opción A: Importar `docker-compose.yml` en ZimaOS / CasaOS
+1. En el panel de **ZimaOS / CasaOS**, haz clic en **App Store** -> **Instalar aplicación personalizada** (Custom Install).
+2. Haz clic en el ícono de **Importar** (arriba a la derecha) y pega el contenido del archivo `docker-compose.yml` de este repositorio:
+```yaml
+name: audacity-contador
+version: '3.8'
+
+services:
+  audacity:
+    image: ghcr.io/wadewatts9/audacity_contador2026:latest
+    container_name: audacity-contador
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - TIMEZONE=America/Montevideo
+      - SECRET_KEY=audacity_zimaos_secret_key_2026
+    volumes:
+      - ./data:/app/data
+```
+3. Haz clic en **Instalar**. ¡Listo! El sistema quedará disponible en `http://<IP-DE-TU-ZIMAOS>:3003`.
+
+---
+
+## 3. Puesta en Marcha en PC Local (Windows / Linux / macOS)
 
 ### Requisitos
 - Docker Desktop instalado y corriendo en el equipo.
 - Navegador moderno (Chrome, Edge, Firefox, Safari).
 
 ### Paso 1: Configurar variables de entorno (opcional)
-Copiar la plantilla de configuración (ya se provee un `.env` preconfigurado por defecto):
+El sistema ya se encuentra preconfigurado en el puerto **`3003`**:
 ```bash
 cp .env.example .env
 ```
-Por defecto, el servicio se publicará en el puerto **`8080`**.
 
-### Paso 2: Construir y levantar los contenedores
+### Paso 2: Levantar los contenedores
 Ejecutar en la raíz del proyecto:
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-### Paso 3: Verificar el estado de los servicios
-```bash
-docker compose ps
-```
-Debe observar los 3 servicios principales (`audacity_db`, `audacity_api`, `audacity_web`) en estado `healthy` o `Up`.
-
-### Paso 4: Crear el primer usuario Docente / Banco
-Ejecutar el comando interactivo explícito (no imprime secretos en logs generales):
-```bash
-docker compose run --rm api python -m app.cli.admin --username admin_docente --password MiClaveDocente2026!
-```
-*(Si no se especifica `--password`, el sistema generará automáticamente una contraseña segura aleatoria).*
-
-### Paso 5: Acceder al sistema
-- **En el equipo local**: Abrir el navegador en `http://127.0.0.1:8080` o `http://localhost:8080`.
-- Iniciar sesión con el usuario docente creado para iniciar la partida y generar las credenciales de los equipos.
+### Paso 3: Acceder al sistema
+- **En el equipo local**: Abrir el navegador en `http://127.0.0.1:3003` o `http://localhost:3003`.
+- **En red local del aula (LAN)**: Compartir la URL `http://<IP_LOCAL_DOCENTE>:3003` a los estudiantes.
 
 ---
 
-## 3. Modo Aula en Red Local (LAN)
+## 4. Modo Aula en Red Local (LAN)
 
 Para que los estudiantes accedan desde sus celulares, tablets o laptops conectadas al Wi-Fi del aula:
 
