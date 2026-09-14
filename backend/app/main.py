@@ -2,14 +2,41 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.database import engine, Base
+import os
+from sqlalchemy import select
+from app.database import engine, Base, AsyncSessionLocal
+from app.models.user import User
+from app.security import hash_password
 from app.routers import auth, games, bank, turns, cards, teams, ws
+
+async def ensure_default_admin():
+    try:
+        async with AsyncSessionLocal() as session:
+            res = await session.execute(select(User).where(User.username == "admin_docente"))
+            admin = res.scalar_one_or_none()
+            if not admin:
+                admin_pwd = os.getenv("ADMIN_PASSWORD", "DocenteAudacity2026!")
+                admin = User(
+                    username="admin_docente",
+                    password_hash=hash_password(admin_pwd),
+                    role="admin_docente",
+                    display_name="Docente / Banco",
+                    token_symbol="🏦",
+                    token_color="#db3448"
+                )
+                session.add(admin)
+                await session.commit()
+                print("[INFO] Usuario docente 'admin_docente' creado automáticamente.")
+    except Exception as e:
+        print(f"[WARN] No se pudo inicializar admin automático: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Crear tablas si no existen (idempotente)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Asegurar que el usuario docente exista en bases nuevas
+    await ensure_default_admin()
     yield
     # Graceful shutdown: disponer engine
     await engine.dispose()
