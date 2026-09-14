@@ -1,0 +1,38 @@
+﻿name: audacity-contador
+version: '3.8'
+
+services:
+  audacity:
+    image: ghcr.io/wadewatts9/audacity_contador2026:latest
+    container_name: audacity-contador
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - TIMEZONE=America/Montevideo
+      - SECRET_KEY=audacity_zimaos_secret_key_2026
+    volumes:
+      - /DATA/AppData/audacity/data:/app/data
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: audacity
+  description:
+    en_us: "Audacity 2.0 - Sistema Contable y Financiero Gamificado para el aula de Economía para Jóvenes"
+    es_es: "Audacity 2.0 - Sistema Contable y Financiero Gamificado para el aula de Economía para Jóvenes"
+  tagline:
+    en_us: "Sistema Contable y Financiero Gamificado"
+    es_es: "Sistema Contable y Financiero Gamificado"
+  developer: "Lic. Prof. Alan Canto"
+  author: "Alan Canto ACDEV"
+  icon: "https://raw.githubusercontent.com/WadeWatts9/audacity_contador2026/main/frontend/public/favicon.svg"
+  thumbnail: "https://raw.githubusercontent.com/WadeWatts9/audacity_contador2026/main/frontend/public/favicon.svg"
+  title:
+    en_us: "Audacity Contador"
+    es_es: "Audacity Contador"
+  category: "Education"
+  port_map: "3003"
+  index: "/"
