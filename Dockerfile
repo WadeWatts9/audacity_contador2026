@@ -46,7 +46,7 @@ EXPOSE 3003
 
 # Healthcheck
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:/api/health || exit 1
+    CMD curl -f http://localhost:3003/api/health || exit 1
 
-# Comando de inicio: uvicorn sirviendo API, WebSockets y Frontend en el puerto 3003
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port "]
+# Comando de inicio seguro
+CMD ["python", "-m", "app.main"]
