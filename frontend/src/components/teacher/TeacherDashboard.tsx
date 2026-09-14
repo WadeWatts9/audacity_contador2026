@@ -66,6 +66,46 @@ export const TeacherDashboard: React.FC = () => {
   const [opReason, setOpReason] = useState<string>('');
   const [targetAdjustTDL, setTargetAdjustTDL] = useState<number>(0);
   const [resolveContracts, setResolveContracts] = useState<boolean>(false);
+  const [activeBankPercentage, setActiveBankPercentage] = useState<number | null>(null);
+  const [customBankPercentage, setCustomBankPercentage] = useState<string>('');
+
+  const selectedTeamForBank = summary?.ranking.find((r) => r.account_id === Number(selectedTeamId));
+  const teamAvailableForBankTDL = selectedTeamForBank ? selectedTeamForBank.balance_available / 100 : 0;
+
+  const handleSelectBankPercentage = (pct: number) => {
+    setActiveBankPercentage(pct);
+    setCustomBankPercentage(String(pct));
+    if (teamAvailableForBankTDL <= 0) {
+      setOpAmountTDL(0);
+      return;
+    }
+    const calculated = Math.floor(teamAvailableForBankTDL * (pct / 100) * 100) / 100;
+    setOpAmountTDL(calculated);
+  };
+
+  const handleCustomBankPercentageChange = (val: string) => {
+    setCustomBankPercentage(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num >= 0) {
+      setActiveBankPercentage(num);
+      const calculated = Math.floor(teamAvailableForBankTDL * (num / 100) * 100) / 100;
+      setOpAmountTDL(calculated);
+    } else {
+      setActiveBankPercentage(null);
+    }
+  };
+
+  const handleOpAmountChange = (val: number) => {
+    setOpAmountTDL(val);
+    if (teamAvailableForBankTDL > 0 && val >= 0) {
+      const calculatedPct = (val / teamAvailableForBankTDL) * 100;
+      setActiveBankPercentage(Number(calculatedPct.toFixed(1)));
+      setCustomBankPercentage(calculatedPct.toFixed(1));
+    } else {
+      setActiveBankPercentage(null);
+      setCustomBankPercentage('');
+    }
+  };
 
   useEffect(() => {
     api.getBoardSquares().then(setSquares).catch(console.error);
@@ -1219,7 +1259,15 @@ export const TeacherDashboard: React.FC = () => {
                 </label>
                 <select
                   value={selectedTeamId}
-                  onChange={(e) => setSelectedTeamId(Number(e.target.value))}
+                  onChange={(e) => {
+                    const newId = Number(e.target.value);
+                    setSelectedTeamId(newId);
+                    if (activeBankPercentage !== null) {
+                      const team = summary?.ranking.find((r) => r.account_id === newId);
+                      const avail = team ? team.balance_available / 100 : 0;
+                      setOpAmountTDL(Math.floor(avail * (activeBankPercentage / 100) * 100) / 100);
+                    }
+                  }}
                   required
                   style={{ width: '100%', padding: '8px', border: '2px solid var(--ink)' }}
                 >
@@ -1257,19 +1305,142 @@ export const TeacherDashboard: React.FC = () => {
               )}
 
               {bankOpType !== 'adjust' && bankOpType !== 'zero' && (
-                <div>
-                  <label style={{ fontWeight: 'bold', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
-                    Monto (TDL):
+                <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '14px' }}>
+                  <label style={{ fontWeight: 'bold', fontSize: '13px', display: 'block', marginBottom: '8px' }}>
+                    Monto de la Operación (Específico o Porcentaje de Saldo):
                   </label>
-                  <input
-                    type="number"
-                    min={0.01}
-                    step={0.01}
-                    value={opAmountTDL}
-                    onChange={(e) => setOpAmountTDL(Number(e.target.value))}
-                    required
-                    style={{ width: '100%', padding: '8px', border: '2px solid var(--ink)' }}
-                  />
+
+                  {/* Botones de Porcentaje Rápido */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <div style={{ fontSize: '12px', color: '#475569', marginBottom: '6px', fontWeight: 600 }}>
+                      Calcular por % del saldo disponible {selectedTeamForBank ? `(${selectedTeamForBank.team_name}: ${teamAvailableForBankTDL.toFixed(2)} TDL)` : ''}:
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {[10, 20, 25, 50, 75, 100].map((pct) => (
+                        <button
+                          key={pct}
+                          type="button"
+                          onClick={() => handleSelectBankPercentage(pct)}
+                          disabled={!selectedTeamId || teamAvailableForBankTDL <= 0}
+                          className="btn"
+                          style={{
+                            padding: '4px 10px',
+                            fontSize: '12px',
+                            background: activeBankPercentage === pct ? 'var(--blue)' : '#ffffff',
+                            color: activeBankPercentage === pct ? '#ffffff' : 'var(--ink)',
+                            border: '1.5px solid var(--ink)',
+                            fontWeight: 'bold',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {pct === 100 ? '100% (Todo)' : `${pct}%`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Inputs de Monto TDL y Porcentaje Manual */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', alignItems: 'flex-start' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#334155', display: 'block', marginBottom: '3px', fontWeight: 600 }}>
+                        Monto Específico (TDL):
+                      </label>
+                      <input
+                        type="number"
+                        min={0.01}
+                        step={0.01}
+                        value={opAmountTDL || ''}
+                        onChange={(e) => handleOpAmountChange(parseFloat(e.target.value) || 0)}
+                        required
+                        placeholder="0.00"
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          fontSize: '15px',
+                          fontWeight: 'bold',
+                          border: '2px solid var(--ink)',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#334155', display: 'block', marginBottom: '3px', fontWeight: 600 }}>
+                        O Porcentaje Manual (%):
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="number"
+                          min={0.1}
+                          max={500}
+                          step={0.1}
+                          value={customBankPercentage}
+                          onChange={(e) => handleCustomBankPercentageChange(e.target.value)}
+                          placeholder="Ej. 15"
+                          disabled={!selectedTeamId || teamAvailableForBankTDL <= 0}
+                          style={{
+                            width: '100%',
+                            padding: '8px 10px',
+                            fontSize: '15px',
+                            fontWeight: 'bold',
+                            border: '2px solid var(--ink)',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                        <span style={{ marginLeft: '6px', fontWeight: 'bold', fontSize: '15px', color: '#475569' }}>%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desglose dinámico */}
+                  {selectedTeamForBank ? (
+                    <div
+                      style={{
+                        marginTop: '10px',
+                        padding: '8px 10px',
+                        background: '#ffffff',
+                        borderRadius: '4px',
+                        border: '1px dashed #cbd5e1',
+                        fontSize: '12px',
+                        color: '#334155',
+                      }}
+                    >
+                      <div>
+                        • <strong>Monto a operar:</strong> {opAmountTDL.toFixed(2)} TDL{' '}
+                        {teamAvailableForBankTDL > 0 && (
+                          <span style={{ color: 'var(--blue)', fontWeight: 600 }}>
+                            ({((opAmountTDL / teamAvailableForBankTDL) * 100).toFixed(1)}% del saldo disponible)
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        • <strong>Saldo disponible actual de {selectedTeamForBank.team_name}:</strong> {teamAvailableForBankTDL.toFixed(2)} TDL
+                      </div>
+                      <div>
+                        • <strong>Saldo resultante estimado para {selectedTeamForBank.team_name}:</strong>{' '}
+                        <span
+                          style={{
+                            fontWeight: 'bold',
+                            color:
+                              bankOpType === 'pay'
+                                ? '#166534'
+                                : teamAvailableForBankTDL - opAmountTDL < 0
+                                ? 'var(--red)'
+                                : '#166534',
+                          }}
+                        >
+                          {bankOpType === 'pay'
+                            ? (teamAvailableForBankTDL + opAmountTDL).toFixed(2)
+                            : (teamAvailableForBankTDL - opAmountTDL).toFixed(2)}{' '}
+                          TDL
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                      💡 Seleccioná una cuenta arriba para habilitar el cálculo rápido por porcentajes de su saldo.
+                    </div>
+                  )}
                 </div>
               )}
 
